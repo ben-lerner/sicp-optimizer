@@ -1,17 +1,9 @@
 (cd "compiler")
-(load "5-compiler.scm")
+(load "5-compiler.scm") ; SICP code for compiler, register machine, and syntax
 (cd "..")
 
 (load "utils.scm")
 (load "syntax.scm")
-
-;; optimizations:
-;;; (1) remove unused labels and unreachable code
-;;; (2) constant folding for built-in ops: if, +, *, etc.
-;;; (3) in-line constants to arg1/arg2/argl/test
-;;; (4) type + val inferences for registers with optimizations
-;;; 'optimize' finds fixed point, i.e. code that doesn't change under a full pass
-;;; drop register assignments that aren't read later
 
 ;; data structures:
 ;;; vals:
@@ -29,15 +21,13 @@
 ;;; needed-reg:
 ;;; list of lists, nth list is any register that is read past that list, and
 ;;; therefore can't be optimized out. We assume 'val' is needed on the last line.
+;;; todo: make list of needed registers configurable.
 ;;;
 ;;; notes ;;;
 ;;; some registers should start with "start", others with "unassigned":
 ;;;; maybe? look at how compiled code is linked and re-eval?
 ;;;; start: env, continue, val
 ;;;; proc: unassigned, argl, arg1, arg2?
-
-
-;;;
 
 (define (make-label-paths code)
   (define (make code paths n trailing-goto)
