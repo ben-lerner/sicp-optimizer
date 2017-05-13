@@ -37,15 +37,14 @@ run repeatedly until the code reaches a fixed-point.
 
 ### Passes
 
-Each pass is numbered, referring to the high level goals above. Italicized
-passes are not yet implemented.
+Each pass is numbered, referring to the high level goals above. 
 
-- Branch analysis (4)
-- Drop unreachable code following gotos (3)
-- Drop tests not followed by a branch (3)
-- Drop unused labels (3)
-- Drop gotos and branches that skip no code (3)
-- *Drop unread register assignments* (3)
-- *Constant folding* (1)
-- *Inline constants* (2)
-- *Type and value inferencing* (4)
+- [x] Branch analysis (4)
+- [x] Drop unreachable code following gotos (3)
+- [x] Drop tests not followed by a branch (3)
+- [x] Drop unused labels (3)
+- [x] Drop gotos and branches that skip no code (3)
+- [ ] Drop unread register assignments (3)
+- [ ] Constant folding (1)
+- [ ] Inline constants (2)
+- [ ] Type and value inferencing (4)
