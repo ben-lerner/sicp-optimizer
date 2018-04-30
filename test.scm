@@ -81,95 +81,93 @@
    (not (noop-static-goto '(goto (label a)) '(assign a (const 4))))))
 
 (define (label-cleanup-test)
-  (let
-      ((tests ; input-output pairs
-        '(((foo
-            bar
-            cat)
-           .
-           ())
+  (run-tests
+   label-cleanup
+   '(((foo
+       bar
+       cat)
+      .
+      ())
 
-          ((foo
-            (goto (label cat))
-            bar
-            cat)
-           .
-           ((goto (label cat))
-            cat))
+     ((foo
+       (goto (label cat))
+       bar
+       cat)
+      .
+      ((goto (label cat))
+       cat))
 
-          ((foo
-            (goto (label cat))
-            cat
-            bar)
-           .
-           ((goto (label cat))
-            cat))
+     ((foo
+       (goto (label cat))
+       cat
+       bar)
+      .
+      ((goto (label cat))
+       cat))
 
-          (((assign a (label foo))
-            (goto (reg a))
-            foo)
-           .
-           ((assign a (label foo))
-            (goto (reg a))
-            foo))
+     (((assign a (label foo))
+       (goto (reg a))
+       foo)
+      .
+      ((assign a (label foo))
+       (goto (reg a))
+       foo))
 
-          (((assign a (label foo))
-            (goto (reg a))
-            bar
-            foo)
-           .
-           ((assign a (label foo))
-            (goto (reg a))
-            foo))
+     (((assign a (label foo))
+       (goto (reg a))
+       bar
+       foo)
+      .
+      ((assign a (label foo))
+       (goto (reg a))
+       foo))
 
-          (((assign a (label foo))
-            (goto (reg a))
-            (assign b (const 1))
-            foo)
-           .
-           ((assign a (label foo))
-            (goto (reg a))
-            (assign b (const 1))
-            foo))
-          )))
-
-    (all
-     (map (lambda (x) (equal? (label-cleanup (car x)) (cdr x)))
-          tests))))
+     (((assign a (label foo))
+       (goto (reg a))
+       (assign b (const 1))
+       foo)
+      .
+      ((assign a (label foo))
+       (goto (reg a))
+       (assign b (const 1))
+       foo))
+     )))
 
 (define (branch-test-cleanup-test)
-  (let
-      ((tests ; input-output pairs
-        '((((test (op false?) (reg val)))
-           .
-           ())
+  (run-tests
+   branch-test-cleanup
+   '((((test (op false?) (reg val)))
+      .
+      ())
 
-          (((test (op false?) (reg val))
-            (branch (label test-branch)))
-           .
-           ((test (op false?) (reg val))
-            (branch (label test-branch))))
+     (((test (op false?) (reg val))
+       (branch (label test-branch)))
+      .
+      ((test (op false?) (reg val))
+       (branch (label test-branch))))
 
-          (((test (op true?) (reg val))
-            (test (op false?) (reg val))
-            (branch (label test-branch)))
-           .
-           ((test (op false?) (reg val))
-            (branch (label test-branch))))
+     (((test (op true?) (reg val))
+       (test (op false?) (reg val))
+       (branch (label test-branch)))
+      .
+      ((test (op false?) (reg val))
+       (branch (label test-branch))))
 
+     (((test (op true?) (reg val))
+       (assign val (op -) (reg arg1) (reg arg2))
+       (test (op false?) (reg val))
+       (branch (label test-branch)))
+      .
+      ((assign val (op -) (reg arg1) (reg arg2))
+       (test (op false?) (reg val))
+       (branch (label test-branch))))
+     )))
 
-          (((test (op true?) (reg val))
-            (assign val (op -) (reg arg1) (reg arg2))
-            (test (op false?) (reg val))
-            (branch (label test-branch)))
-           .
-           ((assign val (op -) (reg arg1) (reg arg2))
-            (test (op false?) (reg val))
-            (branch (label test-branch))))
-          )))
-    (all
-     (map (lambda (x) (equal? (branch-test-cleanup (car x)) (cdr x)))
-          tests))))
+(define (run-tests test-fn tests)
+  (all
+   (map
+    (lambda (x) (equal? (test-fn (car x)) (cdr x)))
+    tests)))
 
 ;; (define (map-fold-test)
 ;;   ;; todo: insert correct fn's

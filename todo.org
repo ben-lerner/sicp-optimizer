@@ -1,9 +1,9 @@
-* remove unused labels and unreachable code
-** get idempotency working
-* compile-time value environment
+* label cleanup
+* compile-time value and type environment
 * in-line constants to arg1/arg2/argl/test
 * constant folding for built-in ops
-* type inferencing
+* integration tests
+** optimize fibonacci seq + a couple other things from the text
 * macros for automatic test counting / message generation
 * performance
 ** pass-ordering
