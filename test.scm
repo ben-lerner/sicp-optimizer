@@ -5,9 +5,9 @@
   (newline))
 
 (newline)
-(print "****************************************")
-(print "Optimization test suite")
-(print "****************************************")
+(print "***************************************")
+(print "        Optimization test suite        ")
+(print "***************************************")
 (newline)
 
 (define (get-registers-test)
@@ -30,7 +30,7 @@
    '(n val)
    ))
 
-(define test-code-1
+(define cleanup-test-1
   '((goto (label done))      ; 1
     (assign a (const 1))     ; 2
     (assign b (const 2))     ; 3
@@ -43,26 +43,29 @@
     very-done                ; 10
     (assign g (const 7))))   ; 11
 
-(define test-code-2
+(define cleanup-test-2
   '((goto (label done))
     done
     (goto (label very-done))
     very-done
     (assign g (const 7))))
 
+(define cleanup-test-3
+  '(done
+    very-done
+    (assign g (const 7))))
+
 (define (label-path-test)
-  (equal? (make-label-paths test-code-1)
+  (equal? (make-label-paths cleanup-test-1)
           '((done 4 1) (very-done 9 6))))
 
 (define (goto-cleanup-test)
-  (equal? (goto-cleanup test-code-2)
-          '(done
-            very-done
-            (assign g (const 7)))))
+  (equal? (goto-cleanup cleanup-test-2)
+          cleanup-test-3))
 
 (define (unreachable-code-test)
-  (equal? (unreachable-code-cleanup test-code-1)
-          test-code-2))
+  (equal? (unreachable-code-cleanup cleanup-test-1)
+          cleanup-test-2))
 
 (define (label-assignment-test)
   (and
@@ -74,7 +77,7 @@
    (noop-static-goto '(goto (label a)) 'a)
    (noop-static-goto '(branch (label a)) 'a)
    (not (noop-static-goto '(goto (reg a)) 'a))
-   (not (noop-static-goto '(goto (label a)) 'b))   
+   (not (noop-static-goto '(goto (label a)) 'b))
    (not (noop-static-goto '(goto (label a)) '(assign a (const 4))))))
 
 (define (label-cleanup-test)
@@ -83,58 +86,50 @@
         '(((foo
             bar
             cat)
-           .
            ())
 
           ((foo
             (goto (label cat))
             bar
             cat)
-           .
            ((goto (label cat))
             cat))
-          
+
           ((foo
             (goto (label cat))
             cat
             bar)
-           .
            ((goto (label cat))
             cat))
-          
+
           (((assign a (label foo))
             (goto (reg a))
             foo)
-           .
            ((assign a (label foo))
             (goto (reg a))
             foo))
-          
+
           (((assign a (label foo))
             (goto (reg a))
             bar
             foo)
-           .
            ((assign a (label foo))
             (goto (reg a))
             foo))
-          
+
           (((assign a (label foo))
             (goto (reg a))
             (assign b (const 1))
             foo)
-           .
            ((assign a (label foo))
             (goto (reg a))
             (assign b (const 1))
             foo))
           )))
+
     (and
-     (map (lambda (x) (equal? (label-cleanup (car x)) (cdr x)))
-          tests)))
-  
-  
-  )
+     (map (lambda (x) (equal? (label-cleanup (car x)) (cadr x)))
+          tests))))
 
 (define (branch-test-cleanup-test)
 (let
@@ -148,7 +143,7 @@
            .
            ((test (op false?) (reg val))
             (branch (label test-branch))))
-          
+
           (((test (op true?) (reg val))
             (test (op false?) (reg val))
             (branch (label test-branch)))
