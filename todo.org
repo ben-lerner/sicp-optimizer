@@ -5,3 +5,6 @@
 * constant folding for built-in ops
 * type inferencing
 * macros for automatic test counting / message generation
+* performance
+** pass-ordering
+** is anything too slow?

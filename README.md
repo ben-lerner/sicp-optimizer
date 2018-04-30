@@ -14,7 +14,7 @@ The code for the compiler and register machine is in `/compiler`.
 ## Installation
 This uses MIT/GNU Scheme, available here: https://www.gnu.org/software/mit-scheme/
 
-To run a package, open scheme (`scheme` on the command line, or `M-x run-guile` in emacs), and execute `load <package.scm>`.
+To run a package, open scheme (`scheme` on the command line, or `M-x run-gesier` in emacs), and execute `load <package.scm>`.
 
 ## Design
 

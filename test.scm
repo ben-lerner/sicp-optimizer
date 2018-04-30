@@ -13,20 +13,20 @@
 (define (get-registers-test)
   (equal?
    (get-registers
-   '((test (op =) (reg n) (const 1))
-     (branch (label two))
-     (assign n (const 1))
-     (goto (label branch-done))
-     two
-     (assign n (const 2))
-     branch-done
-     (test (op <) (reg n) (const 3))
-     (branch (label lt))
-     (assign val (const "<3"))
-     (goto (label done))
-     (assign val (const "</3"))
-     done)
-   )
+    '((test (op =) (reg n) (const 1))
+      (branch (label two))
+      (assign n (const 1))
+      (goto (label branch-done))
+      two
+      (assign n (const 2))
+      branch-done
+      (test (op <) (reg n) (const 3))
+      (branch (label lt))
+      (assign val (const "<3"))
+      (goto (label done))
+      (assign val (const "</3"))
+      done)
+    )
    '(n val)
    ))
 
@@ -86,12 +86,14 @@
         '(((foo
             bar
             cat)
+           .
            ())
 
           ((foo
             (goto (label cat))
             bar
             cat)
+           .
            ((goto (label cat))
             cat))
 
@@ -99,12 +101,14 @@
             (goto (label cat))
             cat
             bar)
+           .
            ((goto (label cat))
             cat))
 
           (((assign a (label foo))
             (goto (reg a))
             foo)
+           .
            ((assign a (label foo))
             (goto (reg a))
             foo))
@@ -113,6 +117,7 @@
             (goto (reg a))
             bar
             foo)
+           .
            ((assign a (label foo))
             (goto (reg a))
             foo))
@@ -121,18 +126,19 @@
             (goto (reg a))
             (assign b (const 1))
             foo)
+           .
            ((assign a (label foo))
             (goto (reg a))
             (assign b (const 1))
             foo))
           )))
 
-    (and
-     (map (lambda (x) (equal? (label-cleanup (car x)) (cadr x)))
+    (all
+     (map (lambda (x) (equal? (label-cleanup (car x)) (cdr x)))
           tests))))
 
 (define (branch-test-cleanup-test)
-(let
+  (let
       ((tests ; input-output pairs
         '((((test (op false?) (reg val)))
            .
@@ -153,21 +159,21 @@
 
 
           (((test (op true?) (reg val))
-            (assig val (op -) (reg arg1) (reg arg2))
+            (assign val (op -) (reg arg1) (reg arg2))
             (test (op false?) (reg val))
             (branch (label test-branch)))
            .
-           ((assig val (op -) (reg arg1) (reg arg2))
+           ((assign val (op -) (reg arg1) (reg arg2))
             (test (op false?) (reg val))
             (branch (label test-branch))))
           )))
-    (and
+    (all
      (map (lambda (x) (equal? (branch-test-cleanup (car x)) (cdr x)))
-          tests)))  )
+          tests))))
 
 ;; (define (map-fold-test)
 ;;   ;; todo: insert correct fn's
-;;   (equal?                               ; check the contents of two lists
+;;   (equal?
 ;;    '((test (op =) (reg n) (const 1))
 ;;      (branch (label two))
 ;;      (assign n (const 1))
@@ -184,6 +190,7 @@
 ;;    '((assign val (const "<3")))))
 
 
+;; todo:
 (define (run tests)
   (define (run-helper pass total tests)
     (if (null? tests)
@@ -208,4 +215,5 @@
    ("noop static goto test" ,noop-static-goto-test)
    ("label cleanup test" ,label-cleanup-test)
    ("branch test cleanup test", branch-test-cleanup-test)
+   ;("map fold test" ,map-fold-test)
    ))

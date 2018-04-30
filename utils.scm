@@ -33,3 +33,13 @@
 ;;; misc
 (define (++ n) (+ n 1))
 (define (-- n) (- n 1))
+
+(define (all vals)
+  (cond ((null? vals) #t)
+        ((not (car vals)) #f)
+        (else (all (cdr vals)))))
+
+(define (any vals)
+  (cond ((null? vals) #f)
+        ((car vals) #t)
+        (else (any (cdr vals)))))
