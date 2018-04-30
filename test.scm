@@ -80,19 +80,29 @@
    (not (noop-static-goto '(goto (label a)) 'b))
    (not (noop-static-goto '(goto (label a)) '(assign a (const 4))))))
 
-(define label-cleanup-test-data
+(define label-cleanup-data
   '(((foo
       bar
       cat)
      .
      ())
 
-    ((foo
-      (goto (label cat))
+    (((goto (label cat))
       bar
       cat)
      .
      ((goto (label cat))
+      cat))
+
+    (((assign a (label cat))
+      (goto (reg a))
+      bar
+      cat)
+     .
+
+     ((assign a (label cat))
+      (goto (reg a)) ;; for now: can't analyze this
+      bar
       cat))
 
     ((foo
@@ -131,7 +141,7 @@
       foo))
     ))
 
-(define branch-test-cleanup-test-data
+(define branch-test-cleanup-data
   '((((test (op false?) (reg val)))
      .
      ())
@@ -162,12 +172,12 @@
 (define (label-cleanup-test)
   (run-tests
    label-cleanup
-   label-cleanup-test-data))
+   label-cleanup-data))
 
 (define (branch-test-cleanup-test)
   (run-tests
    branch-test-cleanup
-   branch-test-cleanup-test-data))
+   branch-test-cleanup-data))
 
 (define (run-tests test-fn tests)
   (all (test-results test-fn tests)))

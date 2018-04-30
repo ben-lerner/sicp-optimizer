@@ -2,6 +2,7 @@
 (define label? symbol?)
 (define (goto? line) (tagged-list? line 'goto))
 (define (branch? line) (tagged-list? line 'branch))
+;; TOOD: static-goto? should return the label
 (define (static-goto? line) (or (goto? line) (branch? line)))
 (define (assignment? line) (tagged-list? line 'assign))
 (define (test? line) (tagged-list? line 'test))
@@ -11,9 +12,15 @@
        (= 3 (length line))
        (label-exp? (caddr line))))
 
+(define reg-gensym "*reg*")
+(define (static-goto-dest line)
+  (if (eq? (caadr line) 'reg)
+      reg-gensym
+      (cadr (goto-dest line))))
+
 (define (static-goto-to line label)
   (and (static-goto? line)
-       (eq? label (goto-dest line))))
+       (eq? label (static-goto-dest line))))
 
 
 ;;; data structure utils

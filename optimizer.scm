@@ -106,22 +106,6 @@
 ;;; labels with no line going to them
 ;;; labels that follow from the previous line only, where prev line is not a goto
 ;;; if previous line is a goto, goto-cleanup will remove it in a different pass
-;; (define (label-cleanup code)
-;;   (let ((paths (make-label-paths code)))
-;;     (define (drop-helper code i after-goto)
-;;       (if (null? code) '()
-;;           (let* ((line (car code))
-;;                  (is-goto (static-goto? line))
-;;                  (rest (drop-helper (cdr code) (++ i) is-goto)))
-;;             (if
-;;              (not (label? line))
-;;              (cons line rest)
-;;              (let ((p (assoc line paths)))
-;;                (if (or (null? p)
-;;                        (and (equal? '(i) p) (not after-goto)))
-;;                    rest
-;;                    (cons line rest)))))))
-;;     (drop-helper code 0 false)))
 
 (define (label-cleanup code)
   (let ((paths (make-label-paths code)))
@@ -130,21 +114,23 @@
           (let* ((line (car code))
                  (p (cdr-if-list (assoc line paths))))
             ;; returns #f if line isn't a label
-            ;; (print p)
-            ;; (print (list i))
-            ;; (print (equal? (list i) p))
-            ;; (print after-goto)
-            ;; (newline)
+            (print p)
+            (print (list i))
+            (print (equal? (list i) p))
+            (print after-goto)
+            (newline)
             (-label-cleanup
              (if (or
                   (null? p)
-                  (and (equal? (list i) p) (not after-goto)))
+                  (and (label? line) (not p))  ;; no paths to label
+                  (and (equal? (list i) p)
+                       (not (equal? after-goto line))))
                  reversed-processed-code
                  (cons line reversed-processed-code))
              (cdr code)
              (++ i)
-             (static-goto? line)))))
-    (-label-cleanup '()  code 0 false)))
+             (and (static-goto? line) (static-goto-dest line))))))
+    (-label-cleanup '()  code 0 #f)))
 
 
 ;; drop code between goto and a label
