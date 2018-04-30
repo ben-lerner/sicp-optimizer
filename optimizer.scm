@@ -3,7 +3,6 @@
 (cd "..")
 
 (load "utils.scm")
-(load "syntax.scm")
 
 ;; data structures:
 ;;; vals:
@@ -13,15 +12,16 @@
 ;;;      possible vals are potential assigned constants.
 ;;; types:
 ;;; list of assoc-lists, as above, but for types. used for op.
+;;; TODO:
 ;;; label-paths:
-;;; assoc-list 
+;;; assoc-list
 ;;;    label -> lines that go to the label
 ;;;    *register* -> lines that go a register location
 ;;;    *register-labels* -> labels that go into registers
 ;;; needed-reg:
 ;;; list of lists, nth list is any register that is read past that list, and
 ;;; therefore can't be optimized out. We assume 'val' is needed on the last line.
-;;; todo: make list of needed registers configurable.
+;;; TODO: make list of needed registers configurable.
 ;;;
 ;;; notes ;;;
 ;;; some registers should start with "start", others with "unassigned":
@@ -30,6 +30,11 @@
 ;;;; proc: unassigned, argl, arg1, arg2?
 
 (define (make-label-paths code)
+  ;; return a list of (label line_1 line_2 line_n) lists,
+  ;; where {line_i} is every line that may go to label
+  ;; TODO: upgrade this with compile-time analysis for register gotos?
+  ;;       may not need to with static analysis of registers, find
+  ;;       counterexample before implementing
   (define (make code paths n trailing-goto)
     ;; n = line number
     ;; trailing-goto is true iff the last op was a goto
@@ -39,9 +44,12 @@
           (make
             (cdr code)
             (cond
-             ((static-goto? line) (add-goto-to-paths line n paths))
-             ((label-assignment? line) (add-label-assignment-to-paths line n paths))
-             ((label? line) (add-label-to-paths line n paths trailing-goto))
+             ((static-goto? line)  ;; goto or branch
+              (add-goto-to-paths line n paths))
+             ((label-assignment? line)
+              (add-label-assignment-to-paths line n paths))
+             ((label? line)
+              (add-label-to-paths line n paths trailing-goto))
              (else paths))
             (++ n)
             (goto? line)))))
@@ -73,7 +81,7 @@
         (lines (assq reg-goto-gensym paths))
         (clean-paths (del-assq reg-labels-gensym
                                (del-assq reg-goto-gensym paths))))
-    
+
     (define (add-reg-lines labels paths)
       (if (null? labels)
           paths
@@ -96,24 +104,48 @@
 
 ;; clean labels:
 ;;; labels with no line going to them
-;;; labels that follow from the previous line, where prev line is not a goto
-;;; (goto-cleanup handles this case, just dropping the label gives invalid code)
+;;; labels that follow from the previous line only, where prev line is not a goto
+;;; if previous line is a goto, goto-cleanup will remove it in a different pass
+;; (define (label-cleanup code)
+;;   (let ((paths (make-label-paths code)))
+;;     (define (drop-helper code i after-goto)
+;;       (if (null? code) '()
+;;           (let* ((line (car code))
+;;                  (is-goto (static-goto? line))
+;;                  (rest (drop-helper (cdr code) (++ i) is-goto)))
+;;             (if
+;;              (not (label? line))
+;;              (cons line rest)
+;;              (let ((p (assoc line paths)))
+;;                (if (or (null? p)
+;;                        (and (equal? '(i) p) (not after-goto)))
+;;                    rest
+;;                    (cons line rest)))))))
+;;     (drop-helper code 0 false)))
+
 (define (label-cleanup code)
   (let ((paths (make-label-paths code)))
-    (define (drop-helper code i after-goto)
-      (if (null? code) '()
+    (define (-label-cleanup reversed-processed-code code i after-goto)
+      (if (null? code) (reverse reversed-processed-code)
           (let* ((line (car code))
-                 (is-goto (static-goto? line))
-                 (rest (drop-helper (cdr code) (++ i) is-goto)))
-            (if
-             (not (label? line))
-             (cons line rest)
-             (let ((p (assoc line paths)))
-               (if (or (null? p)
-                       (and (equal? '(i) p) (not after-goto)))
-                   rest
-                   (cons line rest)))))))
-    (drop-helper code 1 false)))
+                 (p (cdr-if-list (assoc line paths))))
+            ;; returns #f if line isn't a label
+            ;; (print p)
+            ;; (print (list i))
+            ;; (print (equal? (list i) p))
+            ;; (print after-goto)
+            ;; (newline)
+            (-label-cleanup
+             (if (or
+                  (null? p)
+                  (and (equal? (list i) p) (not after-goto)))
+                 reversed-processed-code
+                 (cons line reversed-processed-code))
+             (cdr code)
+             (++ i)
+             (static-goto? line)))))
+    (-label-cleanup '()  code 0 false)))
+
 
 ;; drop code between goto and a label
 (define (unreachable-code-cleanup code)
@@ -124,14 +156,14 @@
           (cond ((label? first) (cons first (drop-helper rest false)))
                 (looking-for-label (drop-helper rest true))
                 ((goto? first) (cons first (drop-helper rest true)))
-                (else (cons first (drop-helper rest false))); we know !looking-for-label 
+                (else (cons first (drop-helper rest false))); we know !looking-for-label
                 ))))
   (drop-helper code false))
 
 (define (branch-test-cleanup code)
   (define (helper reversed-code branch-seen)
     ;; branch-seen tracks whether we've seen a branch since the last test. If
-    ;; not, we can drop any test we run into.
+    ;; not, we can drop the test.
     (if (null? reversed-code)
         '()
         (let ((first (car reversed-code))
@@ -145,8 +177,8 @@
   (reverse (helper (reverse code) false)))
 
 ;; drop gotos and branches that skip no code
-;; NB: no need to analyze (goto reg). If the reg is constant, it'll be replaced
-;; with a label eventually.
+;; ignore (goto reg). if `reg` is constant it'll be replaced with a label
+;; in a different pass, and this will work in a later iteration.
 (define (goto-cleanup code)
   (if (<= (length code) 1)
       code
@@ -160,20 +192,20 @@
   (and (static-goto? first)
        (label-exp? (goto-dest first))
        (label? second)
-       (eq? second (label-exp-label (goto-dest first)))))  
-  
+       (eq? second (label-exp-label (goto-dest first)))))
+
 
 ;; code manipulation utils
 (define  (get-registers-from-line line)
   (define (line-helper parts)
     (cond ((null? parts) '())
-          ((not (list? (car parts))) ;; assign 
+          ((not (list? (car parts))) ;; assign
            (set-add-element (car parts) (line-helper (cdr parts))))
           ((eq? (caar parts) 'reg)
            (set-add-element (cadar parts) (line-helper (cdr parts))))
           (else
            (line-helper (cdr parts)))))
-  
+
   (if (label? line)
       '()
       (line-helper (cdr line)) ;; skip op

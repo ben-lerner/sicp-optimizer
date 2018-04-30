@@ -1,10 +1,12 @@
-* label cleanup
+* debug label cleanup
 * compile-time value and type environment
 * in-line constants to arg1/arg2/argl/test
 * constant folding for built-in ops
+* if -> goto
 * integration tests
 ** optimize fibonacci seq + a couple other things from the text
+** test multiple passes
 * macros for automatic test counting / message generation
 * performance
 ** pass-ordering
-** is anything too slow?
+** all passes should run in O(n)
