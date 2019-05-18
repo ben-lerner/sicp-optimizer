@@ -139,6 +139,11 @@
       foo))
     ))
 
+(define (label-cleanup-test)
+  (run-tests
+   label-cleanup
+   label-cleanup-data))
+
 (define branch-test-cleanup-data
   '((((test (op false?) (reg val)))
      .
@@ -164,18 +169,62 @@
      .
      ((assign val (op -) (reg arg1) (reg arg2))
       (test (op false?) (reg val))
-      (branch (label test-branch))))
-     ))
+      (branch (label test-branch))))))
 
-(define (label-cleanup-test)
-  (run-tests
-   label-cleanup
-   label-cleanup-data))
 
 (define (branch-test-cleanup-test)
   (run-tests
    branch-test-cleanup
    branch-test-cleanup-data))
+
+(define (inline-constants-test)
+  (run-tests
+   (lambda (x) x)
+   inline-constant-data))
+
+(define (drop-unread-register-assigments-test)
+  (run-tests
+   (lambda (x) x)
+   drop-unread-register-assigments-data))
+
+(define constant-folding-data
+  '((((assign val (op -) (const 3) (const 2)))
+     .
+     ((assign val (const 1))))
+
+    (((assign val (op <) (const 2) (const 3)))
+     .
+     ((assign val (const true))))
+
+    (((test (const false))
+      (branch (label test-branch))
+      (assign val (const 1)))
+     .
+     ((assign val (const 1))))
+
+    (((test (const true))
+      (branch (label test-branch))
+      (assign val (const 1)))
+     .
+     ((goto (label test-branch))
+      (assign val (const 1))))))
+
+(define (constant-folding-test)
+  (run-tests
+   (lambda (x) x)
+   constant-folding-data))
+
+(define (type-inference-test)
+  (run-tests
+   (lambda (x) x)
+   type-inference-data))
+
+(define (value-inference-test)
+  (run-tests
+   (lambda (x) x)
+   value-inference-data))
+
+;;;;; Test utilities
 
 (define (print-test input expected-output output)
   (print "\nInput:")
@@ -240,6 +289,11 @@
    ("goto cleanup" ,goto-cleanup-test)
    ("noop static goto" ,noop-static-goto-test)
    ("label cleanup" ,label-cleanup-test)
-   ("branch cleanup", branch-test-cleanup-test)
-   ;("map fold" ,map-fold-test)
+   ("branch cleanup" ,branch-test-cleanup-test)
+                                        ;("map fold" ,map-fold-test)
+   ;; ("inline constants" ,inline-constants-test)
+   ;; ("drop unread register assignments" ,drop-unread-register-assigments-test)
+   ;; done but not implemented ("constant folding" ,constant-folding-test)
+   ;; ("type inferencing" ,type-inference-test)
+   ;; ("value inferencing" ,value-inference-test)  ;; what is this supposed to do?
    ))
