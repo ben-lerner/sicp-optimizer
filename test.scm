@@ -177,7 +177,7 @@
    branch-test-cleanup
    branch-test-cleanup-data))
 
-(define (print-test input output expected-output)
+(define (print-test input expected-output output)
   (print "\nInput:")
   (print input)
   (print "\nExpected:")
