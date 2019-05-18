@@ -58,13 +58,16 @@
 (define reg-goto-gensym '*reg-gotos*)
 (define reg-labels-gensym '*reg-assigned-labels*)
 
+(define (static-goto-label line)
+  (let ((dest (goto-dest line)))
+    (cond ((label-exp? dest) (label-exp-label dest))
+          ((register-exp? dest) reg-goto-gensym)
+          (else (error "Bad GOTO (ah, but I repeat myself)" line)))))
+
 (define (add-goto-to-paths line n paths)
   (add-val-to-key-list
    paths
-   (let ((dest (goto-dest line)))
-     (cond ((label-exp? dest) (label-exp-label dest))
-           ((register-exp? dest) reg-goto-gensym)
-           (else (error "Bad GOTO (ah, but I repeat myself)" line))))
+   (static-goto-label line)
    n))
 
 ;; track which labels are assigned to registers
@@ -107,29 +110,33 @@
 ;;; labels that follow from the previous line only, where prev line is not a goto
 ;;; if previous line is a goto, goto-cleanup will remove it in a different pass
 
+(define (paths-for-label line paths)
+  (if (not (label? line))
+      #f
+      (let ((p (assoc line paths)))
+        (if p
+            p
+            '()))))
+
 (define (label-cleanup code)
   (let ((paths (make-label-paths code)))
     (define (-label-cleanup reversed-processed-code code i after-goto)
       (if (null? code) (reverse reversed-processed-code)
           (let* ((line (car code))
-                 (p (cdr-if-list (assoc line paths))))
+                 (p (paths-for-label line paths)))
             ;; returns #f if line isn't a label
-            (print p)
-            (print (list i))
-            (print (equal? (list i) p))
-            (print after-goto)
-            (newline)
             (-label-cleanup
              (if (or
                   (null? p)
-                  (and (label? line) (not p))  ;; no paths to label
                   (and (equal? (list i) p)
                        (not (equal? after-goto line))))
                  reversed-processed-code
                  (cons line reversed-processed-code))
              (cdr code)
              (++ i)
-             (and (static-goto? line) (static-goto-dest line))))))
+             (and
+              (static-goto? line)
+              (static-goto-label line))))))
     (-label-cleanup '()  code 0 #f)))
 
 

@@ -1,5 +1,10 @@
 * debug label cleanup
 * compile-time value and type environment
+** label patchs after value analyssi?
+* make dag for passes. goto and branch cleanup before label cleanup
+** or just a comment for now
+* track test bit with registers, including post-branch assumptions.
+** remember, test just sets a bit, it's not directly related to branch
 * in-line constants to arg1/arg2/argl/test
 * constant folding for built-in ops
 * if -> goto

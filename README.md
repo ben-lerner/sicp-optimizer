@@ -1,6 +1,6 @@
-This is an optimizer for the scheme compiler described in chapter 5 of
-[Structure and Interpretation of Computer
-Programs](https://mitpress.mit.edu/sicp/full-text/book/book.html). The target
+This is an optimizer for the scheme compiler in chapter 5 of
+[Structure and Interpretation of Computer Programs](
+https://mitpress.mit.edu/sicp/full-text/book/book.html). The target
 language is the SICP register machine, also described in chapter 5.
 
 ## Usage
@@ -14,18 +14,18 @@ The code for the compiler and register machine is in `/compiler`.
 ## Installation
 This uses MIT/GNU Scheme, available here: https://www.gnu.org/software/mit-scheme/
 
-To run a package, open scheme (`scheme` on the command line, or `M-x run-gesier` in emacs), and execute `load <package.scm>`.
+To run a package, open scheme (`scheme` on the command line, or `M-x run-gesier` in emacs), and execute `load "<package.scm>"`.
 
 ## Design
 
 ### Architecture
 
-The optimizer has four main parts:
+The optimizer has four parts:
 
 1. Constant folding for builtin operations
 2. In-line constants for the registers `arg1`, `arg2`, `argl`, and `test`
 3. Remove no-ops, unused labels, and unreachable code
-4. Type/value inferencing and branch analysis
+4. Type inferencing, value inferencing, and branch analysis
 
 ### Runtime
 

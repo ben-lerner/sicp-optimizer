@@ -5,9 +5,9 @@
   (newline))
 
 (newline)
-(print "***************************************")
-(print "        Optimization test suite        ")
-(print "***************************************")
+(print "***********************************")
+(print "      Optimization test suite      ")
+(print "***********************************")
 (newline)
 
 (define (get-registers-test)
@@ -25,10 +25,8 @@
       (assign val (const "<3"))
       (goto (label done))
       (assign val (const "</3"))
-      done)
-    )
-   '(n val)
-   ))
+      done))
+   '(n val)))
 
 (define cleanup-test-1
   '((goto (label done))      ; 1
@@ -179,13 +177,25 @@
    branch-test-cleanup
    branch-test-cleanup-data))
 
-(define (run-tests test-fn tests)
-  (all (test-results test-fn tests)))
+(define (print-test input output expected-output)
+  (print "\nInput:")
+  (print input)
+  (print "\nExpected:")
+  (print expected-output)
+  (print "\nGot:")
+  (print output))
 
-(define (test-results test-fn tests)
-  (map
-    (lambda (x) (equal? (test-fn (car x)) (cdr x)))
-    tests))
+(define (run-tests test-fn tests)
+  (define (pass? test)
+    (let* ((input (car test))
+           (output (test-fn input))
+           (expected-output (cdr test)))
+      (if (equal? output expected-output)
+          #t
+          (begin
+            (print-test input expected-output output)
+            #f))))
+  (all (map pass? tests)))
 
 ;; (define (map-fold-test)
 ;;   ;; todo: insert correct fn's
@@ -206,30 +216,30 @@
 ;;    '((assign val (const "<3")))))
 
 
-;; todo:
 (define (run tests)
   (define (run-helper pass total tests)
     (if (null? tests)
-        (print (string-append "Done: "(string pass) "/" (string total) " tests passed"))
+        (print (string-append
+                "\n"(string pass) "/" (string total) " tests passed\n"))
         (let ((test-name (caar tests))
               (test (cadar tests)))
-          (if (test)
-              (run-helper (+ 1 pass) (+ 1 total) (cdr tests))
-              (begin
-                (if (= pass total) ; first failed test
-                    (newline))
-                (print (string-append "failed \"" test-name "\""))
-                (run-helper pass (+ 1 total) (cdr tests)))))))
+          (newline)
+          (print (make-string (string-length test-name) #\*))
+          (print test-name)
+          (print (make-string (string-length test-name) #\*))
+          (let ((test-passed? (test)))
+            (print (if test-passed? "Passed" "\nFailed"))
+            (run-helper (+ pass (if test-passed? 1 0))
+                        (+ 1 total)
+                        (cdr tests))))))
   (run-helper 0 0 tests))
 
-;; todo: print failed results
-
 (run
- `(("get registers test" ,get-registers-test)
-   ("unreachable code test" ,unreachable-code-test)
-   ("goto cleanup test" ,goto-cleanup-test)
-   ("noop static goto test" ,noop-static-goto-test)
-   ("label cleanup test" ,label-cleanup-test)
-   ("branch test cleanup test", branch-test-cleanup-test)
-   ;("map fold test" ,map-fold-test)
+ `(("get registers" ,get-registers-test)
+   ("unreachable code" ,unreachable-code-test)
+   ("goto cleanup" ,goto-cleanup-test)
+   ("noop static goto" ,noop-static-goto-test)
+   ("label cleanup" ,label-cleanup-test)
+   ("branch cleanup", branch-test-cleanup-test)
+   ;("map fold" ,map-fold-test)
    ))

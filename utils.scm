@@ -12,15 +12,9 @@
        (= 3 (length line))
        (label-exp? (caddr line))))
 
-(define reg-gensym "*reg*")
-(define (static-goto-dest line)
-  (if (eq? (caadr line) 'reg)
-      reg-gensym
-      (cadr (goto-dest line))))
-
 (define (static-goto-to line label)
   (and (static-goto? line)
-       (eq? label (static-goto-dest line))))
+       (eq? label (goto-dest line))))
 
 
 ;;; data structure utils
@@ -69,8 +63,3 @@
   (cond ((null? vals) #f)
         ((car vals) #t)
         (else (any (cdr vals)))))
-
-(define (cdr-if-list x)
-    (if (list? x)
-        (cdr x)
-        x))
