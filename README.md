@@ -45,4 +45,5 @@ Each pass is numbered, referring to the architecture.
 - [ ] Drop unread register assignments (3)
 - [ ] Constant folding (1)
 - [ ] Inline constants (2)
-- [ ] Type and value inferencing (4)
+- [ ] Type inferencing (4)
+- [ ] Value inferencing (4)

@@ -219,10 +219,41 @@
    (lambda (x) x)
    type-inference-data))
 
+(define value-inference-data
+  '((((test (op >) (reg arg1) (reg arg2))
+      (branch (label foo))
+      (assign val (const 2))
+      (goto (label bar))
+      foo
+      (assign val (const 1))
+      bar
+      (assign val (op >) (reg val) (const 0)))
+     .
+     (assign val (const true)))))
+
 (define (value-inference-test)
   (run-tests
    (lambda (x) x)
    value-inference-data))
+
+;; integration tests
+;; (define (map-fold-test)
+;;   (equal?
+;;    '((test (op =) (reg n) (const 1))
+;;      (branch (label two))
+;;      (assign n (const 1))
+;;      (goto (label branch-done))
+;;      two
+;;      (assign n (const 2))
+;;      branch-done
+;;      (test (op <) (reg n) (const 3))
+;;      (branch (label lt))
+;;      (assign val (const "<3"))
+;;      (goto (label done))
+;;      (assign val (const "</3"))
+;;      done)
+;;    '((assign val (const "<3")))))
+
 
 ;;;;; Test utilities
 
@@ -245,25 +276,6 @@
             (print-test input expected-output output)
             #f))))
   (all (map pass? tests)))
-
-;; (define (map-fold-test)
-;;   ;; todo: insert correct fn's
-;;   (equal?
-;;    '((test (op =) (reg n) (const 1))
-;;      (branch (label two))
-;;      (assign n (const 1))
-;;      (goto (label branch-done))
-;;      two
-;;      (assign n (const 2))
-;;      branch-done
-;;      (test (op <) (reg n) (const 3))
-;;      (branch (label lt))
-;;      (assign val (const "<3"))
-;;      (goto (label done))
-;;      (assign val (const "</3"))
-;;      done)
-;;    '((assign val (const "<3")))))
-
 
 (define (run tests)
   (define (run-helper pass total tests)
@@ -295,5 +307,5 @@
    ;; ("drop unread register assignments" ,drop-unread-register-assigments-test)
    ;; done but not implemented ("constant folding" ,constant-folding-test)
    ;; ("type inferencing" ,type-inference-test)
-   ;; ("value inferencing" ,value-inference-test)  ;; what is this supposed to do?
+   ;; ("value inferencing" ,value-inference-test)
    ))
