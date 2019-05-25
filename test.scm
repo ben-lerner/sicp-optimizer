@@ -99,7 +99,7 @@
      .
 
      ((assign a (label cat))
-      (goto (reg a)) ;; for now: can't analyze this
+      (goto (reg a))
       bar
       cat))
 
@@ -171,16 +171,28 @@
       (test (op false?) (reg val))
       (branch (label test-branch))))))
 
-
 (define (branch-test-cleanup-test)
   (run-tests
    branch-test-cleanup
    branch-test-cleanup-data))
 
+(define inline-constant-data
+  '((((assign arg1 (const 3))
+      (assign arg2 (op +) (reg arg1) (const 2)))
+     .
+     ((assign arg1 (const 3))
+      (assign arg2 (op +) (const 3) (const 2))))))
+
 (define (inline-constants-test)
   (run-tests
    (lambda (x) x)
    inline-constant-data))
+
+(define drop-unread-register-assigments-data
+  '((((assign arg1 (const 3))
+      (assign arg2 (op +) (const 3) (const 2)))
+     .
+     ((assign arg2 (op +) (const 3) (const 2))))))
 
 (define (drop-unread-register-assigments-test)
   (run-tests
@@ -214,6 +226,7 @@
    (lambda (x) x)
    constant-folding-data))
 
+;; todo: where does type inferencing do anything?
 (define (type-inference-test)
   (run-tests
    (lambda (x) x)
@@ -296,16 +309,18 @@
   (run-helper 0 0 tests))
 
 (run
- `(("get registers" ,get-registers-test)
+ `(;; unit tests
+   ("get registers" ,get-registers-test)
    ("unreachable code" ,unreachable-code-test)
    ("goto cleanup" ,goto-cleanup-test)
    ("noop static goto" ,noop-static-goto-test)
    ("label cleanup" ,label-cleanup-test)
    ("branch cleanup" ,branch-test-cleanup-test)
-                                        ;("map fold" ,map-fold-test)
-   ;; ("inline constants" ,inline-constants-test)
-   ;; ("drop unread register assignments" ,drop-unread-register-assigments-test)
-   ;; done but not implemented ("constant folding" ,constant-folding-test)
-   ;; ("type inferencing" ,type-inference-test)
-   ;; ("value inferencing" ,value-inference-test)
+   ("inline constants" ,inline-constants-test)
+   ("drop unread register assignments" ,drop-unread-register-assigments-test)
+   ("constant folding" ,constant-folding-test)
+;   ("type inferencing" ,type-inference-test)
+   ("value inferencing" ,value-inference-test)
+   ;; integration tests
+   ;; ("map fold" ,map-fold-test)
    ))
