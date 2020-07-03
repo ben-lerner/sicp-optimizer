@@ -30,8 +30,8 @@ The optimizer has four parts:
 ### Runtime
 
 Each run of the optimizer performs multiple passes on the source code. Every
-pass transforms the code into valid, equivalent instructions. The optimizer
-runs repeatedly until the code reaches a fixed-point.
+pass transforms the code into an equivalent instruction set. The optimizer runs
+repeatedly until the code reaches a fixed-point.
 
 ### Passes
 
@@ -47,3 +47,5 @@ Each pass is numbered, referring to the architecture.
 - [ ] Inline constants (2)
 - [ ] Type inferencing (4)
 - [ ] Value inferencing (4)
+- [ ] Remove unused restore/save pairs (3)
+- [ ] Op re-ordering
