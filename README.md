@@ -35,13 +35,13 @@ repeatedly until the code reaches a fixed-point.
 
 ### Passes
 
-Each pass is numbered, referring to the architecture.
+Each pass is numbered, referring to the optimizer parts.
 
 - [x] Branch analysis (4)
 - [x] Drop unreachable code following gotos (3)
 - [x] Drop tests not followed by a branch (3)
 - [ ] Drop unused labels (3)
-- [ ] Fuse consecutive labels (3)
+- [x] Fuse consecutive labels (3)
 - [x] Drop gotos and branches that skip no code (3)
 - [ ] Drop unread register assignments (3)
 - [ ] Constant folding (1)

@@ -7,15 +7,11 @@
 (define (assignment? line) (tagged-list? line 'assign))
 (define (test? line) (tagged-list? line 'test))
 
+;; path-making util
 (define (label-assignment? line)
   (and (assignment? line)
        (= 3 (length line))
        (label-exp? (caddr line))))
-
-(define (static-goto-to line label)
-  (and (static-goto? line)
-       (eq? label (goto-dest line))))
-
 
 ;;; data structure utils
 (define (set-insert set element)
@@ -27,12 +23,12 @@
 
 (define (set-union . sets)
   (cond ((= 1 (length sets)) (car sets))
-        ((null? (car sets)) (set-union (cdr sets)))
+        ((null? (car sets)) (apply set-union (cdr sets)))
         (else
-         (set-union (cdar sets)
-                    (set-insert (caar sets) (cadr sets))
-                    .
-                    (cddr sets)))))
+         (apply set-union
+                `(,(cdar sets)
+                  ,(set-insert (cadr sets) (caar sets))
+                  ,@(cddr sets))))))
 
 ;; dict: list of (key . val) pairs
 (define (insert dict key val)
@@ -50,27 +46,6 @@
   (insert dict-of-sets
           key
           (set-insert (get dict-of-sets key) val)))
-
-
-;; (define (add-val-to-dict alist key val)
-;;   (add-val-list-to-dict alist key (list val)))
-
-;; (define (add-val-list-to-dict alist key val-list)
-;;   (cond ((null? alist)
-;;          (list (cons key val-list)))
-;;         ((eq? (caar alist) key)
-;;          (cons
-;;           (insert-val-list (car alist) val-list)
-;;           (cdr alist)))
-;;         (else
-;;          (cons
-;;           (car alist)
-;;           (add-val-list-to-dict (cdr alist) key val-list)))))
-
-;; (define (insert-val-list keylist val-list)
-;;   (let ((key (car keylist))
-;;         (cur-vals (cdr keylist)))
-;;     (cons key (append val-list cur-vals))))
 
 ;;; misc
 (define (inc n) (+ n 1))

@@ -31,43 +31,58 @@
 
 ;;;; label cleanup
 (define (make-label-paths code)
-  ;; return {label: [i, j, ...]},
-  ;;   where [i, j, ...] is every line that may go to label
-  ;; TODO: incorporate value inference for registers
-  ;;       may not need to with static analysis of registers, find
-  ;;       counterexample before implementing
+  ;; return {label: {i, j, ...}},
+  ;;   where {i, j, ...} is every line that may go to label
+
+  (define (make
+            code
+            label-to-lines  ;; goto or branch to label
+            reg-to-lines    ;; goto or branch to register
+            reg-to-labels   ;; labels assigned to register
+            line-number
+            last-line-was-goto)
+    (if (null? code)
+        (combine-dicts label-to-lines reg-to-lines reg-to-labels)
+        (let ((line (car code)))
+          (make
+            (cdr code)
+            ;; label-to-lines
+            (cond ((and (static-goto? line) (label-exp? (goto-dest line)))
+                   (dict-of-sets-insert label-to-lines
+                                        (label-exp-label (goto-dest line))
+                                        line-number))
+                  ((and (label? line) (not last-line-was-goto))
+                   (dict-of-sets-insert label-to-lines
+                                        line
+                                        (dec line-number)))
+                  (else label-to-lines))
+
+            ;; reg-to-lines
+            (if (and (static-goto? line) (register-exp? (goto-dest line)))
+                (dict-of-sets-insert reg-to-lines
+                                     (register-exp-reg (goto-dest line))
+                                     line-number)
+                reg-to-lines)
+
+            ;; reg-to-labels
+            (if (label-assignment? line)
+                (dict-of-sets-insert reg-to-labels
+                                     (assign-reg-name line)
+                                     (label-exp-label
+                                      (car (assign-value-exp line))))
+                reg-to-labels)
+
+            (inc line-number)
+            (goto? line)))))
+
+  (define (combine-dicts label-to-lines reg-to-lines reg-to-labels)
+    (let ((labels (map car label-to-lines))))
+    label-to-lines
 
 
+    )
 
-
-  ;; (define (make code paths n trailing-goto)
-  ;;   ;; n = line number
-  ;;   ;; trailing-goto is true iff the last op was a goto
-  ;;   (if (null? code)
-  ;;       paths
-  ;;       (let ((line (car code)))
-  ;;         (make
-  ;;           (cdr code)
-  ;;           (cond
-  ;;            ((static-goto? line)  ;; goto or branch
-  ;;             (add-goto-to-paths line n paths))
-  ;;            ((label-assignment? line)
-  ;;             (add-label-assignment-to-paths line n paths))
-  ;;            ((label? line)
-  ;;             (add-label-to-paths line n paths trailing-goto))
-  ;;            (else paths))
-  ;;           (inc n)
-  ;;           (goto? line)))))
-
-  (define (add-goto-to-paths line n paths)
-    (add-val-to-dict
-     paths
-     (static-goto-label line)
-     n))
-
-
-
-  (resolve-reg-labels (make code '() 1 false)))
+  (make code '() '() '() 1 #f))
 
 (define (fuse-consecutive-labels lines)
   (define (redundant-labels lines)
@@ -107,45 +122,6 @@
     (filter (lambda (x) x) (map update-labels lines)))
 
   (change-labels lines (redundant-labels lines)))
-
-(define reg-goto-gensym '*reg-gotos*)
-(define reg-labels-gensym '*reg-assigned-labels*)
-
-(define (static-goto-label line)
-  (let ((dest (goto-dest line)))
-    (cond ((label-exp? dest) (label-exp-label dest))
-          ((register-exp? dest) reg-goto-gensym)
-          (else (error "Bad GOTO (ah, but I repeat myself)" line)))))
-
-
-
-;; track which labels are assigned to registers
-(define (add-label-assignment-to-paths line n paths)
-  (add-val-to-dict paths reg-labels-gensym n))
-
-(define (add-label-to-paths label n paths trailing-goto)
-  (if trailing-goto
-      paths
-      (add-val-to-dict paths label (dec n))))
-
-(define (resolve-reg-labels paths)
-  (let ((labels (assq reg-labels-gensym paths))
-        (lines (assq reg-goto-gensym paths))
-        (clean-paths (del-assq reg-labels-gensym
-                               (del-assq reg-goto-gensym paths))))
-
-    (define (add-reg-lines labels paths)
-      (if (null? labels)
-          paths
-          (add-reg-lines
-           (cdr labels)
-           (add-val-list-to-dict paths (car labels) lines))))
-
-    (cond ((and labels lines)
-           (add-reg-lines labels clean-paths))
-          (labels (error "label assigned to reg and never called"))
-          (lines (error "goto register with no label assignment"))
-          (else paths))))
 
 ;; construct data structures
 (define (get-registers code)
