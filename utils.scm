@@ -18,10 +18,12 @@
 
 
 ;;; data structure utils
-(define (set-insert element set)
-  (if (memq element set)
-      set
-      (cons element set)))
+(define (set-insert set element)
+  (if set
+      (if (memq element set)
+          set
+          (cons element set))
+      (list element)))
 
 (define (set-union . sets)
   (cond ((= 1 (length sets)) (car sets))
@@ -33,6 +35,23 @@
                     (cddr sets)))))
 
 ;; dict: list of (key . val) pairs
+(define (insert dict key val)
+  (cons (cons key val) dict))
+
+(define (get dict key)
+  (let ((pair (assoc key dict)))
+    (if pair
+        (cdr pair)
+        #f)))
+
+;; dict-of-sets: list of (key . set) pairs
+(define (dict-of-sets-insert dict-of-sets key val)
+  ;; note: this grows with each insert
+  (insert dict-of-sets
+          key
+          (set-insert (get dict-of-sets key) val)))
+
+
 ;; (define (add-val-to-dict alist key val)
 ;;   (add-val-list-to-dict alist key (list val)))
 
@@ -54,10 +73,8 @@
 ;;     (cons key (append val-list cur-vals))))
 
 ;;; misc
-(define (++ n) (+ n 1))
-(define (-- n) (- n 1))
-(define inc ++)
-(define dec --)
+(define (inc n) (+ n 1))
+(define (dec n) (- n 1))
 
 (define (all vals)
   (cond ((null? vals) #t)

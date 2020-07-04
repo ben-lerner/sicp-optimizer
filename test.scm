@@ -144,23 +144,24 @@
    label-cleanup-data))
 
 (define fuse-label-data
-  '((((foo
-       bar
-       cat))
+  '(((foo
+      bar
+      cat)
      .
      (foo))
 
-    ((goto bar)
-     foo
-     bar
-     cat)
-    .
-    (goto foo)
-    foo))
+    (((goto (label bar))
+      foo
+      bar
+      cat)
+     .
+     ((goto (label foo))
+      foo))))
 
-(define label-fuse-test
-  '(fuse-consecutive-labels
-    fuse-label-data))
+(define (label-fuse-test)
+  (run-tests
+   fuse-consecutive-labels
+   fuse-label-data))
 
 (define branch-test-cleanup-data
   '((((test (op false?) (reg val)))
@@ -332,7 +333,7 @@
    ;; ("unreachable code" ,unreachable-code-test)
    ;; ("goto cleanup" ,goto-cleanup-test)
    ;; ("noop static goto" ,noop-static-goto-test)
-   ("label cleanup" ,label-cleanup-test)
+;;   ("label cleanup" ,label-cleanup-test)
    ("label fuse" ,label-fuse-test)
 ;;    ("branch cleanup" ,branch-test-cleanup-test)
 ;;    ("inline constants" ,inline-constants-test)

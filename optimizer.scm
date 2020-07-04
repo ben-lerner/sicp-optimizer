@@ -78,32 +78,33 @@
                  ;; two lables in a row
                  (-redundant-labels
                   (cdr lines)
-                  (cons '(last-label (car lines)) new-line-dict)
+                  (insert new-line-dict (car lines) last-label)
                   last-label)
                  ;; not two lables in a row
                  (-redundant-labels
                   (cdr lines)
-                  (new-line-dict)
+                  new-line-dict
                   (car lines))))
             (else (-redundant-labels (cdr lines) new-line-dict #f))))
     (-redundant-labels lines '() #f))
 
-
-  (define (change-lables lines new-line-dict)
+  (define (change-labels lines new-line-dict)
     (define (update-label label)  ;; new-line-dict[label] or label
-      (let (el (assoc label new-line-dict))
+      (let ((el (assoc label new-line-dict)))
         (if el (cdr el) label)))
     (define (update-labels line)
       (if (label? line)
-          (update-label line)
+          (if (get new-line-dict line)    ;; skip duplicates
+              #f  ;; #f filtered out later
+              line)
           (map
-           (lambda (line-elem)
+           (lambda (exp)
              (if
-              (tagged-list? line-elem 'label)
-              `(label ,(update-label (cdr line-elem)))
-              line-elem))
+              (label-exp? exp)
+              `(label ,(update-label (label-exp-label exp)))
+              exp))
            line)))
-    (map (update-labels lines)))
+    (filter (lambda (x) x) (map update-labels lines)))
 
   (change-labels lines (redundant-labels lines)))
 
