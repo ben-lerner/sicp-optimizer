@@ -1,4 +1,6 @@
-* debug label cleanup
+* finish refactor
+* debug label cleanup  
+* fuse consecutive labels
 * compile-time value and type environment
 ** label paths after value analyssi?
 * make dag for passes. goto and branch cleanup before label cleanup

@@ -1,5 +1,5 @@
-(cd "compiler")
-(load "5-compiler.scm") ; SICP code for compiler, register machine, and syntax
+(cd "compiler")  ;; Scheme's library utilties are not great
+(load "5-compiler.scm")  ;; SICP code for compiler, register machine, and syntax
 (cd "..")
 
 (load "utils.scm")
@@ -23,37 +23,89 @@
 ;;; therefore can't be optimized out. We assume 'val' is needed on the last line.
 ;;; TODO: make list of needed registers configurable.
 ;;;
-;;; notes ;;;
+;;; notes:
 ;;; some registers should start with "start", others with "unassigned":
 ;;;; maybe? look at how compiled code is linked and re-eval?
 ;;;; start: env, continue, val
 ;;;; proc: unassigned, argl, arg1, arg2?
 
+;;;; label cleanup
 (define (make-label-paths code)
-  ;; return a list of (label line_1 line_2 line_n) lists,
-  ;; where {line_i} is every line that may go to label
-  ;; TODO: upgrade this with compile-time analysis for register gotos?
+  ;; return {label: [i, j, ...]},
+  ;;   where [i, j, ...] is every line that may go to label
+  ;; TODO: incorporate value inference for registers
   ;;       may not need to with static analysis of registers, find
   ;;       counterexample before implementing
-  (define (make code paths n trailing-goto)
-    ;; n = line number
-    ;; trailing-goto is true iff the last op was a goto
-    (if (null? code)
-        paths
-        (let ((line (car code)))
-          (make
-            (cdr code)
-            (cond
-             ((static-goto? line)  ;; goto or branch
-              (add-goto-to-paths line n paths))
-             ((label-assignment? line)
-              (add-label-assignment-to-paths line n paths))
-             ((label? line)
-              (add-label-to-paths line n paths trailing-goto))
-             (else paths))
-            (inc n)
-            (goto? line)))))
+
+
+
+
+  ;; (define (make code paths n trailing-goto)
+  ;;   ;; n = line number
+  ;;   ;; trailing-goto is true iff the last op was a goto
+  ;;   (if (null? code)
+  ;;       paths
+  ;;       (let ((line (car code)))
+  ;;         (make
+  ;;           (cdr code)
+  ;;           (cond
+  ;;            ((static-goto? line)  ;; goto or branch
+  ;;             (add-goto-to-paths line n paths))
+  ;;            ((label-assignment? line)
+  ;;             (add-label-assignment-to-paths line n paths))
+  ;;            ((label? line)
+  ;;             (add-label-to-paths line n paths trailing-goto))
+  ;;            (else paths))
+  ;;           (inc n)
+  ;;           (goto? line)))))
+
+  (define (add-goto-to-paths line n paths)
+    (add-val-to-dict
+     paths
+     (static-goto-label line)
+     n))
+
+
+
   (resolve-reg-labels (make code '() 1 false)))
+
+(define (fuse-consecutive-labels lines)
+  (define (redundant-labels lines)
+    (define (-redundant-labels lines new-line-dict last-label)
+      (cond ((null? lines) new-line-dict)
+            ((label? (car lines))
+             (if last-label
+                 ;; two lables in a row
+                 (-redundant-labels
+                  (cdr lines)
+                  (cons '(last-label (car lines)) new-line-dict)
+                  last-label)
+                 ;; not two lables in a row
+                 (-redundant-labels
+                  (cdr lines)
+                  (new-line-dict)
+                  (car lines))))
+            (else (-redundant-labels (cdr lines) new-line-dict #f))))
+    (-redundant-labels lines '() #f))
+
+
+  (define (change-lables lines new-line-dict)
+    (define (update-label label)  ;; new-line-dict[label] or label
+      (let (el (assoc label new-line-dict))
+        (if el (cdr el) label)))
+    (define (update-labels line)
+      (if (label? line)
+          (update-label line)
+          (map
+           (lambda (line-elem)
+             (if
+              (tagged-list? line-elem 'label)
+              `(label ,(update-label (cdr line-elem)))
+              line-elem))
+           line)))
+    (map (update-labels lines)))
+
+  (change-labels lines (redundant-labels lines)))
 
 (define reg-goto-gensym '*reg-gotos*)
 (define reg-labels-gensym '*reg-assigned-labels*)
@@ -64,20 +116,16 @@
           ((register-exp? dest) reg-goto-gensym)
           (else (error "Bad GOTO (ah, but I repeat myself)" line)))))
 
-(define (add-goto-to-paths line n paths)
-  (add-val-to-key-list
-   paths
-   (static-goto-label line)
-   n))
+
 
 ;; track which labels are assigned to registers
 (define (add-label-assignment-to-paths line n paths)
-  (add-val-to-key-list paths reg-labels-gensym n))
+  (add-val-to-dict paths reg-labels-gensym n))
 
 (define (add-label-to-paths label n paths trailing-goto)
   (if trailing-goto
       paths
-      (add-val-to-key-list paths label (dec n))))
+      (add-val-to-dict paths label (dec n))))
 
 (define (resolve-reg-labels paths)
   (let ((labels (assq reg-labels-gensym paths))
@@ -90,7 +138,7 @@
           paths
           (add-reg-lines
            (cdr labels)
-           (add-val-list-to-key-list paths (car labels) lines))))
+           (add-val-list-to-dict paths (car labels) lines))))
 
     (cond ((and labels lines)
            (add-reg-lines labels clean-paths))
@@ -100,15 +148,9 @@
 
 ;; construct data structures
 (define (get-registers code)
-  (if (null? code)
-      '()
-      (set-union (get-registers-from-line (car code))
-                 (get-registers (cdr code)))))
+  (set-union (map get-registers-from-line code)))
 
-;; clean labels:
-;;; labels with no line going to them
-;;; labels that follow from the previous line only, where prev line is not a goto
-;;; if previous line is a goto, goto-cleanup will remove it in a different pass
+;; clean labels: delete labels with no lines going to them
 
 (define (paths-for-label line paths)
   (if (not (label? line))
@@ -137,7 +179,7 @@
              (and
               (static-goto? line)
               (static-goto-label line))))))
-    (-label-cleanup '()  code 0 #f)))
+    (-label-cleanup '() code 0 #f)))
 
 
 ;; drop code between goto and a label
@@ -193,9 +235,9 @@
   (define (line-helper parts)
     (cond ((null? parts) '())
           ((not (list? (car parts))) ;; assign
-           (set-add-element (car parts) (line-helper (cdr parts))))
+           (set-insert (car parts) (line-helper (cdr parts))))
           ((eq? (caar parts) 'reg)
-           (set-add-element (cadar parts) (line-helper (cdr parts))))
+           (set-insert (cadar parts) (line-helper (cdr parts))))
           (else
            (line-helper (cdr parts)))))
 

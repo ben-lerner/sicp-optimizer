@@ -18,37 +18,40 @@
 
 
 ;;; data structure utils
-;; TODO: faster sets
-(define (set-add-element element set)
+(define (set-insert element set)
   (if (memq element set)
       set
       (cons element set)))
 
-(define (set-union a b)
-  (if (null? a)
-      b
-      (set-union (cdr a) (set-add-element (car a) b))))
-
-;; key-list: list of (key . vals) pairs
-(define (add-val-to-key-list alist key val)
-  (add-val-list-to-key-list alist key (list val)))
-
-(define (add-val-list-to-key-list alist key val-list)
-  (cond ((null? alist)
-         (list (cons key val-list)))
-        ((eq? (caar alist) key)
-         (cons
-          (insert-val-list (car alist) val-list)
-          (cdr alist)))
+(define (set-union . sets)
+  (cond ((= 1 (length sets)) (car sets))
+        ((null? (car sets)) (set-union (cdr sets)))
         (else
-         (cons
-          (car alist)
-          (add-val-list-to-key-list (cdr alist) key val-list)))))
+         (set-union (cdar sets)
+                    (set-insert (caar sets) (cadr sets))
+                    .
+                    (cddr sets)))))
 
-(define (insert-val-list keylist val-list)
-  (let ((key (car keylist))
-        (cur-vals (cdr keylist)))
-    (cons key (append val-list cur-vals))))
+;; dict: list of (key . val) pairs
+;; (define (add-val-to-dict alist key val)
+;;   (add-val-list-to-dict alist key (list val)))
+
+;; (define (add-val-list-to-dict alist key val-list)
+;;   (cond ((null? alist)
+;;          (list (cons key val-list)))
+;;         ((eq? (caar alist) key)
+;;          (cons
+;;           (insert-val-list (car alist) val-list)
+;;           (cdr alist)))
+;;         (else
+;;          (cons
+;;           (car alist)
+;;           (add-val-list-to-dict (cdr alist) key val-list)))))
+
+;; (define (insert-val-list keylist val-list)
+;;   (let ((key (car keylist))
+;;         (cur-vals (cdr keylist)))
+;;     (cons key (append val-list cur-vals))))
 
 ;;; misc
 (define (++ n) (+ n 1))
