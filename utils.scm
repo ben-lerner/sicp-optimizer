@@ -53,6 +53,8 @@
 ;;; misc
 (define (++ n) (+ n 1))
 (define (-- n) (- n 1))
+(define inc ++)
+(define dec --)
 
 (define (all vals)
   (cond ((null? vals) #t)

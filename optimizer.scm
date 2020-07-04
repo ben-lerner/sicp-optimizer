@@ -51,7 +51,7 @@
              ((label? line)
               (add-label-to-paths line n paths trailing-goto))
              (else paths))
-            (++ n)
+            (inc n)
             (goto? line)))))
   (resolve-reg-labels (make code '() 1 false)))
 
@@ -77,7 +77,7 @@
 (define (add-label-to-paths label n paths trailing-goto)
   (if trailing-goto
       paths
-      (add-val-to-key-list paths label (-- n))))
+      (add-val-to-key-list paths label (dec n))))
 
 (define (resolve-reg-labels paths)
   (let ((labels (assq reg-labels-gensym paths))
@@ -133,7 +133,7 @@
                  reversed-processed-code
                  (cons line reversed-processed-code))
              (cdr code)
-             (++ i)
+             (inc i)
              (and
               (static-goto? line)
               (static-goto-label line))))))

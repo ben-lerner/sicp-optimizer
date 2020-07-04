@@ -48,4 +48,4 @@ Each pass is numbered, referring to the architecture.
 - [ ] Type inferencing (4)
 - [ ] Value inferencing (4)
 - [ ] Remove unused restore/save pairs (3)
-- [ ] Op re-ordering
+- [ ] if -> goto for deterministic branches (1)
