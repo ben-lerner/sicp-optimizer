@@ -11,22 +11,23 @@
 (newline)
 
 (define (get-registers-test)
-  (equal?
-   (get-registers
-    '((test (op =) (reg n) (const 1))
-      (branch (label two))
-      (assign n (const 1))
-      (goto (label branch-done))
-      two
-      (assign n (const 2))
-      branch-done
-      (test (op <) (reg n) (const 3))
-      (branch (label lt))
-      (assign val (const "<3"))
-      (goto (label done))
-      (assign val (const "</3"))
-      done))
-   '(n val)))
+  (let ((reg
+         (get-registers
+          '((test (op =) (reg n) (const 1))
+            (branch (label two))
+            (assign n (const 1))
+            (goto (label branch-done))
+            two
+            (assign n (const 2))
+            branch-done
+            (test (op <) (reg n) (const 3))
+            (branch (label lt))
+            (assign val (const "<3"))
+            (goto (label done))
+            (assign val (const "</3"))
+            done))))
+    (or (equal? reg '(n val))
+        (equal? reg '(val n)))))
 
 (define cleanup-test-1
   '((goto (label done))      ; 1
@@ -78,54 +79,19 @@
    (not (noop-static-goto '(goto (label a)) 'b))
    (not (noop-static-goto '(goto (label a)) '(assign a (const 4))))))
 
-(define label-cleanup-data
+(define integration-label-cleanup-data
   '(((foo
       bar
       cat)
      .
      ())
 
-    (((goto (label cat))
-      bar
-      cat)
-     .
-     ((goto (label cat))
-      cat))
-
-    (((assign a (label cat))
-      (goto (reg a))
-      bar
-      cat)
-     .
-
-     ((assign a (label cat))
-      (goto (reg a))
-      cat))
-
     ((foo
       (goto (label cat))
       cat
       bar)
      .
-     ((goto (label cat))
-      cat))
-
-    (((assign a (label foo))
-      (goto (reg a))
-      foo)
-     .
-     ((assign a (label foo))
-      (goto (reg a))
-      foo))
-
-    (((assign a (label foo))
-      (goto (reg a))
-      bar
-      foo)
-     .
-     ((assign a (label foo))
-      (goto (reg a))
-      foo))
+     ())
 
     (((assign a (label foo))
       (goto (reg a))
@@ -137,6 +103,31 @@
       (assign b (const 1))
       foo))
     ))
+
+(define label-cleanup-data
+  '((((goto (label cat))
+      bar
+      cat)
+     .
+     ((goto (label cat))
+      cat))
+
+    (((assign a (label cat))
+      (goto (reg a))
+      bar
+      cat)
+     .
+     ((assign a (label cat))
+      (goto (reg a))
+      cat))
+
+    (((assign a (label foo))
+      (goto (reg a))
+      foo)
+     .
+     ((assign a (label foo))
+      (goto (reg a))
+      foo))))
 
 (define (label-cleanup-test)
   (run-tests
@@ -317,6 +308,7 @@
         (let ((test-name (caar tests))
               (test (cadar tests)))
           (newline)
+
           (print (make-string (string-length test-name) #\*))
           (print test-name)
           (print (make-string (string-length test-name) #\*))
@@ -329,18 +321,19 @@
 
 (run
  `(;; unit tests
-   ;; ("get registers" ,get-registers-test)
-   ;; ("unreachable code" ,unreachable-code-test)
-   ;; ("goto cleanup" ,goto-cleanup-test)
-   ;; ("noop static goto" ,noop-static-goto-test)
+   ("get registers" ,get-registers-test)
+   ("unreachable code" ,unreachable-code-test)
+   ("goto cleanup" ,goto-cleanup-test)
+   ("noop static goto" ,noop-static-goto-test)
    ("label cleanup" ,label-cleanup-test)
-;;   ("label fuse" ,label-fuse-test)
-;;    ("branch cleanup" ,branch-test-cleanup-test)
-;;    ("inline constants" ,inline-constants-test)
-;;    ("drop unread register assignments" ,drop-unread-register-assigments-test)
-;;    ("constant folding" ,constant-folding-test)
-;; ;   ("type inferencing" ,type-inference-test)
-;;    ("value inferencing" ,value-inference-test)
+   ("label fuse" ,label-fuse-test)
+   ("branch cleanup" ,branch-test-cleanup-test)
+;   ("inline constants" ,inline-constants-test)
+;;   ("drop unread register assignments" ,drop-unread-register-assigments-test)
+;;   ("constant folding" ,constant-folding-test)
+;   ("type inferencing" ,type-inference-test)
+;   ("value inferencing" ,value-inference-test)
 ;;    ;; integration tests
 ;;    ;; ("map fold" ,map-fold-test)
+;;    ;; integration-label-cleanup
    ))

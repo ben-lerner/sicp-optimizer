@@ -6,6 +6,7 @@
 (define (static-goto? line) (or (goto? line) (branch? line)))
 (define (assignment? line) (tagged-list? line 'assign))
 (define (test? line) (tagged-list? line 'test))
+(define (identity x) x)
 
 ;; path-making util
 (define (label-assignment? line)
@@ -30,23 +31,56 @@
                   ,(set-insert (cadr sets) (caar sets))
                   ,@(cddr sets))))))
 
+(define (set . elements)
+  (if (null? elements)
+      '()
+      (set-insert (apply set (cdr elements)) (car elements))))
+
 ;; dict: list of (key . val) pairs
 (define (insert dict key val)
-  (cons (cons key val) dict))
+  (cons (cons key val)
+        (filter (lambda (pair) (not (equal? (car pair) key))) dict)))
 
 (define (get dict key)
-  (let ((pair (assoc key dict)))
-    (if pair
-        (cdr pair)
-        #f)))
+  (cond ((null? dict) #f)
+        ((equal? (caar dict) key) (cdar dict))
+        (else (get (cdr dict) key))))
 
 ;; dict-of-sets: list of (key . set) pairs
 (define (dict-of-sets-insert dict-of-sets key val)
-  ;; note: this grows with each insert
   (insert dict-of-sets
           key
           (set-insert (get dict-of-sets key) val)))
 
+(define (dict-to-sets-to-pairs dict-to-sets)
+  (apply append (map
+                 (lambda (pair)
+                   (let ((key (car pair))
+                         (set (cdr pair)))
+                     (map (lambda (v) (cons key v)) set)))
+                 dict-to-sets)))
+
+(define (pairs-to-dict-to-sets pairs)
+  (if (null? pairs)
+      pairs
+      (dict-of-sets-insert
+       (pairs-to-dict-to-sets (cdr pairs))
+       (caar pairs)
+       (cdar pairs))))
+
+;; alternate definition of pairs-to-dict-to-sets.
+;; this one is conceptually simpler, but harder to follow with scheme's reduce
+(define (p2 pairs)
+  (reduce
+   (lambda (pair d)
+     (dict-of-sets-insert d (car pair) (cdr pair)))
+   '()
+   (cons '() pairs)))
+
+(define (invert dict-to-sets)
+  (pairs-to-dict-to-sets
+   (map (lambda (pair) (cons (cdr pair) (car pair)))
+        (dict-to-sets-to-pairs dict-to-sets))))
 ;;; misc
 (define (inc n) (+ n 1))
 (define (dec n) (- n 1))

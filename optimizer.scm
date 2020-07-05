@@ -76,12 +76,22 @@
             (goto? line)))))
 
   (define (combine-dicts label-to-lines reg-to-lines reg-to-labels)
-    (let ((labels (map car label-to-lines))))
-    label-to-lines
-
-
-    )
-
+    (let ((labels (apply set-union
+                          (cons
+                           (map car label-to-lines)
+                           (map cdr reg-to-labels))))
+          (labels-to-reg (invert reg-to-labels)))
+      ;; label -> union (label-to-lines, relevant-reges-to-lines)
+      (map
+       (lambda (label)
+         (cons label
+               (let ((registers (get labels-to-reg label)))
+                 (if (not registers)
+                     (get label-to-lines label)  ;; must be non-empty
+                     (apply set-union
+                            (cons (or (get label-to-lines label) '())
+                                  (map (lambda (r) (get reg-to-lines r)) registers)))))))
+       labels)))
   (make code '() '() '() 1 #f))
 
 (define (fuse-consecutive-labels lines)
@@ -119,45 +129,22 @@
               `(label ,(update-label (label-exp-label exp)))
               exp))
            line)))
-    (filter (lambda (x) x) (map update-labels lines)))
+    (filter identity (map update-labels lines)))
 
   (change-labels lines (redundant-labels lines)))
 
 ;; construct data structures
 (define (get-registers code)
-  (set-union (map get-registers-from-line code)))
+  (apply set-union (map get-registers-from-line code)))
 
-;; clean labels: delete labels with no lines going to them
-
-(define (paths-for-label line paths)
-  (if (not (label? line))
-      #f
-      (let ((p (assoc line paths)))
-        (if p
-            p
-            '()))))
-
+;; delete labels with no lines going to them
 (define (label-cleanup code)
   (let ((paths (make-label-paths code)))
-    (define (-label-cleanup reversed-processed-code code i after-goto)
-      (if (null? code) (reverse reversed-processed-code)
-          (let* ((line (car code))
-                 (p (paths-for-label line paths)))
-            ;; returns #f if line isn't a label
-            (-label-cleanup
-             (if (or
-                  (null? p)
-                  (and (equal? (list i) p)
-                       (not (equal? after-goto line))))
-                 reversed-processed-code
-                 (cons line reversed-processed-code))
-             (cdr code)
-             (inc i)
-             (and
-              (static-goto? line)
-              (static-goto-label line))))))
-    (-label-cleanup '() code 0 #f)))
-
+    (filter
+     (lambda (line)
+       (or (not (label? line))
+           (get paths line)))
+     code)))
 
 ;; drop code between goto and a label
 (define (unreachable-code-cleanup code)
@@ -209,16 +196,16 @@
 
 ;; code manipulation utils
 (define  (get-registers-from-line line)
-  (define (line-helper parts)
-    (cond ((null? parts) '())
-          ((not (list? (car parts))) ;; assign
-           (set-insert (car parts) (line-helper (cdr parts))))
-          ((eq? (caar parts) 'reg)
-           (set-insert (cadar parts) (line-helper (cdr parts))))
-          (else
-           (line-helper (cdr parts)))))
-
-  (if (label? line)
-      '()
-      (line-helper (cdr line)) ;; skip op
-      ))
+  (define (reg-pairs line)
+    (apply set
+           (filter
+            identity
+            (map
+             (lambda (exp)
+               (and (register-exp? exp)
+                    (register-exp-reg exp)))
+             line))))
+  (cond ((label? line) '())
+        ((assignment? line)
+         (set-insert (reg-pairs line) (assign-reg-name line)))
+        (else (reg-pairs line))))
