@@ -306,17 +306,12 @@
         (print (string-append
                 "\n"(string pass) "/" (string total) " tests passed\n"))
         (let ((test-name (caar tests))
-              (test (cadar tests)))
-          (newline)
-
-          (print (make-string (string-length test-name) #\*))
-          (print test-name)
-          (print (make-string (string-length test-name) #\*))
-          (let ((test-passed? (test)))
-            (print (if test-passed? "Passed" "\nFailed"))
-            (run-helper (+ pass (if test-passed? 1 0))
-                        (+ 1 total)
-                        (cdr tests))))))
+              (test-passed? ((cadar tests))))
+          (print (string (if test-passed? "pass" "fail")
+                         ": " test-name))
+          (run-helper (+ pass (if test-passed? 1 0))
+                        (inc total)
+                        (cdr tests)))))
   (run-helper 0 0 tests))
 
 (run
