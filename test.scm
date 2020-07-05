@@ -220,7 +220,7 @@
 
     (((test (op =) (const 0) (const 1)))
      .
-     ((test (const #f))))
+     ((test (op true?) (const #f))))
 
     (((assign foo (op =) (reg a) (reg b)))
      .

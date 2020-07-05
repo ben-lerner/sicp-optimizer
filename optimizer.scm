@@ -228,14 +228,21 @@
 
 (define (fold-constants code)
   (define (fold-line exp)
-    (cond ((not (pair? exp)) exp)
-          ((null? exp) exp)
-          ((not (operation-exp? exp))
-           (cons (car exp) (fold-line (cdr exp))))
-          (else ;; found op - apply primitive op to constants
-           (let ((op (assoc (operation-exp-op exp) ops))
-                 (args (operation-exp-operands exp)))
-             (if (and ops (all (map constant-exp? args)))
-                 `((const ,(apply (cadr op) (map cadr args))))
-                 exp)))))
+    (define (-fold-line exp)
+      (cond ((not (pair? exp)) exp)
+            ((null? exp) exp)
+            ((not (operation-exp? exp))
+             (cons (car exp) (-fold-line (cdr exp))))
+            (else ;; found op - apply primitive op to constants
+             (let ((op (assoc (operation-exp-op exp) ops))
+                   (args (operation-exp-operands exp)))
+               (if (and ops (all (map constant-exp? args)))
+                   `((const ,(apply (cadr op) (map cadr args))))
+                   exp)))))
+    (let ((exp (-fold-line exp)))
+      ;; add (op true?) to folded test for a valid exp. This will be optimized
+      ;; away later, but we need it for the instruction to be valid.
+      (if (and (test? exp) (= 2 (length exp)))
+          `(test (op true?) ,@(cdr exp))
+          exp)))
   (map fold-line code))
