@@ -195,7 +195,7 @@
 
 (define (inline-constants-test)
   (run-tests
-   (lambda (x) x)
+   identity
    inline-constant-data))
 
 (define drop-unread-register-assigments-data
@@ -206,7 +206,7 @@
 
 (define (drop-unread-register-assigments-test)
   (run-tests
-   (lambda (x) x)
+   identity
    drop-unread-register-assigments-data))
 
 (define constant-folding-data
@@ -216,7 +216,30 @@
 
     (((assign val (op <) (const 2) (const 3)))
      .
-     ((assign val (const true))))
+     ((assign val (const #t))))))
+
+(define (constant-folding-test)
+  (run-tests
+   fold-constants
+   constant-folding-data))
+
+;; todo: where does type inferencing do anything?
+(define (type-inference-test)
+  (run-tests
+   identity
+   type-inference-data))
+
+(define value-inference-data
+  '((((test (op >) (reg arg1) (reg arg2))
+      (branch (label foo))
+      (assign val (const 2))
+      (goto (label bar))
+      foo
+      (assign val (const 1))
+      bar
+      (assign val (op >) (reg val) (const 0)))
+     .
+     (assign val (const true)))
 
     (((test (const false))
       (branch (label test-branch))
@@ -231,32 +254,9 @@
      ((goto (label test-branch))
       (assign val (const 1))))))
 
-(define (constant-folding-test)
-  (run-tests
-   (lambda (x) x)
-   constant-folding-data))
-
-;; todo: where does type inferencing do anything?
-(define (type-inference-test)
-  (run-tests
-   (lambda (x) x)
-   type-inference-data))
-
-(define value-inference-data
-  '((((test (op >) (reg arg1) (reg arg2))
-      (branch (label foo))
-      (assign val (const 2))
-      (goto (label bar))
-      foo
-      (assign val (const 1))
-      bar
-      (assign val (op >) (reg val) (const 0)))
-     .
-     (assign val (const true)))))
-
 (define (value-inference-test)
   (run-tests
-   (lambda (x) x)
+   identity
    value-inference-data))
 
 ;; integration tests
@@ -325,7 +325,7 @@
    ("branch cleanup" ,branch-test-cleanup-test)
 ;   ("inline constants" ,inline-constants-test)
 ;;   ("drop unread register assignments" ,drop-unread-register-assigments-test)
-;;   ("constant folding" ,constant-folding-test)
+   ("constant folding" ,constant-folding-test)
 ;   ("type inferencing" ,type-inference-test)
 ;   ("value inferencing" ,value-inference-test)
 ;;    ;; integration tests

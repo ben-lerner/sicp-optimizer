@@ -12,6 +12,7 @@
 ;;;      possible vals are potential assigned constants.
 ;;; types:
 ;;; list of assoc-lists, as above, but for types. used for op.
+;;;
 ;;; TODO:
 ;;; label-paths:
 ;;; assoc-list
@@ -195,7 +196,7 @@
 
 
 ;; code manipulation utils
-(define  (get-registers-from-line line)
+(define (get-registers-from-line line)
   (define (reg-pairs line)
     (apply set
            (filter
@@ -209,3 +210,30 @@
         ((assignment? line)
          (set-insert (reg-pairs line) (assign-reg-name line)))
         (else (reg-pairs line))))
+
+;; constant folding
+
+;;; normally, we would get primitive operations from the machine.
+;;; for convenience, we're inlining the list of ops.
+(define ops
+  (list (list '+ +)
+        (list '- -)
+        (list '* *)
+        (list '/ /)
+        (list '> >)
+        (list '< <)
+        (list '= =)
+        (list 'false? false?)
+        (list 'true? true?)))
+
+(define (fold-constants code)
+  (define (fold-line line)
+    (if (and (assignment-of-op? line)
+             (assoc (assignment-op line) ops)
+             (all (map constant-exp? (assignment-args line))))
+        `(assign
+          ,(assign-reg-name line)
+          (const ,(apply (cadr (assoc (assignment-op line) ops))
+                         (map cadr (assignment-args line)))))
+        line))
+  (map fold-line code))

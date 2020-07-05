@@ -1,10 +1,7 @@
-* finish refactor
-* debug label cleanup  
-* fuse consecutive labels
+* unused save/restore pairs
+* constant folding
 * compile-time value and type environment
 ** label paths after value analyssi?
-* make dag for passes. goto and branch cleanup before label cleanup
-** or just a comment for now
 * track test bit with registers, including post-branch assumptions.
 ** remember, test just sets a bit, it's not directly related to branch
 * in-line constants to arg1/arg2/argl/test
@@ -13,6 +10,3 @@
 * integration tests
 ** optimize fibonacci seq + a couple other things from the text
 ** test multiple passes
-* performance
-** pass-ordering
-** all passes should run in O(n)

@@ -5,6 +5,12 @@
 ;; TOOD: static-goto? should return the label
 (define (static-goto? line) (or (goto? line) (branch? line)))
 (define (assignment? line) (tagged-list? line 'assign))
+(define (assignment-of-op? line)
+  (and (assignment? line)
+       (tagged-list? (caddr line) 'op)))
+(define (assignment-op assign-instruction) (car (cdaddr assign-instruction)))
+(define (assignment-args line) (cdddr line))
+
 (define (test? line) (tagged-list? line 'test))
 (define (identity x) x)
 
