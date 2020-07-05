@@ -216,7 +216,19 @@
 
     (((assign val (op <) (const 2) (const 3)))
      .
-     ((assign val (const #t))))))
+     ((assign val (const #t))))
+
+    (((test (op =) (const 0) (const 1)))
+     .
+     ((test (const #f))))
+
+    (((assign foo (op =) (reg a) (reg b)))
+     .
+     ((assign foo (op =) (reg a) (reg b))))
+
+    ((foo)
+     .
+     (foo))))
 
 (define (constant-folding-test)
   (run-tests

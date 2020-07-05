@@ -23,9 +23,9 @@ To run a package, open scheme (`scheme` on the command line, or `M-x run-gesier`
 The optimizer has four parts:
 
 1. Constant folding for builtin operations
-2. In-line constants for the registers `arg1`, `arg2`, `argl`, and `test`
-3. Remove no-ops, unused labels, and unreachable code
-4. Type inferencing, value inferencing, and branch analysis
+2. Remove no-ops, unused labels, and unreachable code
+3. Type inferencing, value inferencing, and branch analysis
+4. In-line constants for the registers `arg1`, `arg2`, `argl`, and `test`
 
 ### Runtime
 
@@ -37,16 +37,27 @@ repeatedly until the code reaches a fixed-point.
 
 Each pass is numbered, referring to the optimizer parts.
 
-- [x] Branch analysis (4)
-- [x] Drop unreachable code following gotos (3)
-- [x] Drop tests not followed by a branch (3)
-- [x] Drop unused labels (3)
-- [x] Fuse consecutive labels (3)
-- [x] Drop gotos and branches that skip no code (3)
-- [ ] Drop unread register assignments (3)
+- [x] Branch analysis (3)
+- [x] Drop unreachable code following gotos (2)
+- [x] Drop tests not followed by a branch (2)
+- [x] Drop unused labels (2)
+- [x] Fuse consecutive labels (2)
+- [x] Drop gotos and branches that skip no code (2)
+- [ ] Drop unread register assignments (2)
 - [x] Constant folding (1)
-- [ ] Inline constants (2)
-- [ ] Type inferencing (4)
-- [ ] Value inferencing (4)
-- [ ] Remove unused save/restore pairs (3)
+- [ ] Inline constants (3)
+- [ ] Type inferencing (3)
+- [ ] Value inferencing (3)
+- [ ] Remove unused save/restore pairs (2)
 - [ ] branch -> goto for deterministic branches (1)
+
+
+### Additional Optimizations
+
+We don't do the following:
+
+- Reordering of ops. We can analyze valid reorderings, but without a target CPU
+  architecture there's no benefit to doing so.
+- Constant folding for multiple inferred values. For example, ((op >) (reg a)
+  (const 0)) can be folded if we know that (reg a) contains either 1
+  or 2. Checking all possible values  will usually not work.
