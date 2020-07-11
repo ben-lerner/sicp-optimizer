@@ -43,7 +43,7 @@ Each pass is numbered, referring to the optimizer parts.
 - [x] Drop unused labels (2)
 - [x] Fuse consecutive labels (2)
 - [x] Drop gotos and branches that skip no code (2)
-- [ ] Drop unread register assignments (2)
+- [ ] Drop unread register assignments and tests (2)
 - [x] Constant folding (1)
 - [ ] Inline constants (3)
 - [ ] Type inferencing (3)
@@ -54,10 +54,12 @@ Each pass is numbered, referring to the optimizer parts.
 
 ### Additional Optimizations
 
-We don't do the following:
+This doesn't do:
 
 - Reordering of ops. We can analyze valid reorderings, but without a target CPU
   architecture there's no benefit to doing so.
 - Constant folding for multiple inferred values. For example, ((op >) (reg a)
   (const 0)) can be folded if we know that (reg a) contains either 1
   or 2. Checking all possible values  will usually not work.
+- Performance tuning of the optimizer. Scheme's built-in data structures leave a
+  lot to be desired, and writing new ones is out of scope.

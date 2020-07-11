@@ -93,7 +93,7 @@
                             (cons (or (get label-to-lines label) '())
                                   (map (lambda (r) (get reg-to-lines r)) registers)))))))
        labels)))
-  (make code '() '() '() 1 #f))
+  (make code '() '() '() 0 #f))
 
 (define (fuse-consecutive-labels lines)
   (define (redundant-labels lines)
@@ -195,22 +195,6 @@
        (eq? second (label-exp-label (goto-dest first)))))
 
 
-;; code manipulation utils
-(define (get-registers-from-line line)
-  (define (reg-pairs line)
-    (apply set
-           (filter
-            identity
-            (map
-             (lambda (exp)
-               (and (register-exp? exp)
-                    (register-exp-reg exp)))
-             line))))
-  (cond ((label? line) '())
-        ((assignment? line)
-         (set-insert (reg-pairs line) (assign-reg-name line)))
-        (else (reg-pairs line))))
-
 ;; constant folding
 
 ;;; normally, we would get primitive operations from the machine.
@@ -246,3 +230,68 @@
           `(test (op true?) ,@(cdr exp))
           exp)))
   (map fold-line code))
+
+;; code manipulation utils
+(define (get-registers-from-line line)
+  (define (reg-pairs line)
+    (apply set
+           (filter
+            identity
+            (map
+             (lambda (exp)
+               (and (register-exp? exp)
+                    (register-exp-reg exp)))
+             line))))
+  (cond ((label? line) '())
+        ((assignment? line)
+         (set-insert (reg-pairs line) (assign-reg-name line)))
+        (else (reg-pairs line))))
+
+
+;; Returns a list, paths = '((1) (2) (3 4) ... (EOF)), where (nth paths n) is
+;; all lines that the nth line can go to. Note that code lines are 0-indexed.
+(define (code-paths code)
+  (define (label-index code)  ;; label -> that label's line number
+    (define (-label-index code line-number index)
+      (if (null? code)
+          index
+          (-label-index
+           (cdr code)
+           (inc line-number)
+           (if (label? (car code))
+               (insert index line-number (car code))
+               index))))
+
+    (-label-index code 0 '()))
+
+  (let ((label-dict (code-paths code))
+        (lines-to-labels (invert (make-label-paths code))))
+    (define (transitions line line-number)
+      (if (goto? line)
+          ()
+          )
+      )
+
+    (define (-code-paths code line-number)
+    (if (null? code)
+        '(EOF)
+        (cons (transitions (car code) line-number)
+              (-code-paths (cdr code) (inc line-number)))))
+
+    (-code-paths code 0)))
+
+;; starting from start-line, walks through code and checks if (read line)
+;; is ever true before (write line) (ignoring start-line).
+;; e.g., test if a register is read before it's written again.
+;; read-at-end is true if reaching the end of code is considered a read
+;; (e.g. for val).
+(define (read-before-write? code start-line read write read-at-end)
+  ;; find all code transitions
+  ;; This should reuse extract-labels, but we want to index the labels without
+  ;; extracting them.
+
+
+
+  (let ((paths (code-paths code 1)))
+    paths
+    ))
