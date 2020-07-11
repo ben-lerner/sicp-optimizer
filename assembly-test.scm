@@ -1,3 +1,27 @@
+(define paths-test
+  '((goto (label after-lambda1))            ;; 0   -> 19
+    entry2                                  ;; 1   -> 2
+    (branch (label false-branch4))          ;; 2   -> 3, 5
+    true-branch5                            ;; 3   -> 4
+    (goto (reg continue))                   ;; 4   -> 12
+    false-branch4                           ;; 5   -> 6
+    (branch (label primitive-branch8))      ;; 6   -> 7, 15
+    (branch (label compiled-branch7))       ;; 7   -> 8, 9
+    (goto (reg continue))                    ;; 8   ->
+    compiled-branch7                        ;; 9
+    (assign continue (label proc-return9))  ;; 10
+    (goto (reg val))                        ;; 11
+    proc-return9                            ;; 12
+    (assign arg1 (reg val))                 ;; 13
+    (goto (label after-call6))              ;; 14
+    primitive-branch8                       ;; 15
+    after-call6                             ;; 16
+    (goto (reg continue))                   ;; 17
+    after-if3                               ;; 18
+    after-lambda1                           ;; 19
+    ))
+
+;; TODO - reprint, at least one typo
 (define factorial-compiled  ;; from print-factorial in 5-compiler.scm
   '((assign val (op make-compiled-procedure) (label entry2) (reg env))
     (goto (label after-lambda1))
@@ -25,7 +49,7 @@
     (test (op compiled-procedure?) (reg proc))
     (branch (label compiled-branch7))
     (save continue)
-    (goto (reg compapp))
+    (goto (reg continue))
     compiled-branch7
     (assign continue (label proc-return9))
     (assign val (op compiled-procedure-entry) (reg proc))

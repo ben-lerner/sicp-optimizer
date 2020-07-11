@@ -3,6 +3,7 @@
 (cd "..")
 
 (load "utils.scm")
+(load "assembly-test.scm")  ;; for testing
 
 ;; data structures:
 ;;; vals:
@@ -30,6 +31,7 @@
 ;;;; start: env, continue, val
 ;;;; proc: unassigned, argl, arg1, arg2?
 
+;; TODO - goto compiled procedure op
 ;;;; label cleanup
 (define (make-label-paths code)
   ;; return {label: {i, j, ...}},
@@ -259,24 +261,29 @@
            (cdr code)
            (inc line-number)
            (if (label? (car code))
-               (insert index line-number (car code))
+               (insert index (car code) line-number)
                index))))
 
     (-label-index code 0 '()))
 
-  (let ((label-dict (code-paths code))
+  (let ((label-dict (label-index code))
         (lines-to-labels (invert (make-label-paths code))))
     (define (transitions line line-number)
-      (if (goto? line)
-          ()
-          )
-      )
+      (set-union
+       (if (goto? line) '() (list (inc line-number)))
+       (filter identity
+               (map
+                (lambda (label) (get label-dict label))
+                (or (get lines-to-labels line-number) '())))))
+
+    ;; todo - do we need to write down when START goes to a label at the
+    ;; beginning of the code?
 
     (define (-code-paths code line-number)
-    (if (null? code)
-        '(EOF)
-        (cons (transitions (car code) line-number)
-              (-code-paths (cdr code) (inc line-number)))))
+      (if (null? code)
+          '()
+          (cons (transitions (car code) line-number)
+                (-code-paths (cdr code) (inc line-number)))))
 
     (-code-paths code 0)))
 
