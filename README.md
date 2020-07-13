@@ -40,8 +40,8 @@ Each pass is numbered, referring to the optimizer parts.
 - [x] Branch analysis (3)
 - [x] Drop unreachable code following gotos (2)
 - [x] Drop tests not followed by a branch (2)
-- [x] Drop unused labels (2)
-- [x] Fuse consecutive labels (2)
+- [x] Drop unused labels (2) - not run in debug
+- [x] Fuse consecutive labels (2) - not run in debug
 - [x] Drop gotos and branches that skip no code (2)
 - [ ] Drop unread register assignments and tests (2)
 - [x] Constant folding (1)
@@ -51,6 +51,16 @@ Each pass is numbered, referring to the optimizer parts.
 - [ ] Remove unused save/restore pairs (2)
 - [ ] branch -> goto for deterministic branches (1)
 
+
+#### Debug Mode
+Certain passes are skipped in debug mode. We assume that any label can be the
+entry point for a debugger, so unreachable labels and the code after them aren't
+considered dead code. We also assume that any register can be set to any value
+after any label.
+
+You should change 'important-registers if you need to inspect the contents of
+some register during debugging. Writes to registers not in that list will be
+elided if unused.
 
 ### Additional Optimizations
 

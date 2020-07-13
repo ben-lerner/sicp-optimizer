@@ -13,8 +13,7 @@
 ;;;      possible vals are potential assigned constants.
 ;;; types:
 ;;; list of assoc-lists, as above, but for types. used for op.
-;;;
-;;; TODO:
+
 ;;; label-paths:
 ;;; assoc-list
 ;;;    label -> lines that go to the label
@@ -23,7 +22,6 @@
 ;;; needed-reg:
 ;;; list of lists, nth list is any register that is read past that list, and
 ;;; therefore can't be optimized out. We assume 'val' is needed on the last line.
-;;; TODO: make list of needed registers configurable.
 ;;;
 ;;; notes:
 ;;; some registers should start with "start", others with "unassigned":
@@ -31,7 +29,11 @@
 ;;;; start: env, continue, val
 ;;;; proc: unassigned, argl, arg1, arg2?
 
-;; TODO - goto compiled procedure op
+
+;; If a value is written to one of these registers, we want to leave it there
+;; (because it may be read by the user). Otherwise, elide unused reads.
+(define important-registers '(val))
+
 ;;;; label cleanup
 (define (make-label-paths code)
   ;; return {label: {i, j, ...}},
@@ -286,6 +288,9 @@
                 (-code-paths (cdr code) (inc line-number)))))
 
     (-code-paths code 0)))
+
+
+;; todo - factor out non-label one
 
 ;; starting from start-line, walks through code and checks if (read line)
 ;; is ever true before (write line) (ignoring start-line).

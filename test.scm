@@ -289,6 +289,13 @@
 ;;      done)
 ;;    '((assign val (const "<3")))))
 
+()
+
+
+(define (save-restore-test)
+  (run-tests
+   identity
+   save-restore-data))
 
 ;;;;; Test utilities
 

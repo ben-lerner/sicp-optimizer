@@ -130,7 +130,7 @@
        (list target)
        (let ((address (find-variable var c-env)))
          (if (eq? address 'not-found)
-             ;; var is in global env 
+             ;; var is in global env
              `((perform (op set-global-variable-value!)
                         (const ,var)
                         (reg val))
@@ -358,14 +358,14 @@
      (list-union (registers-modified seq1)
                  (registers-modified seq2))
      (append (statements seq1) (statements seq2))))
-  
+
   (define (append-seq-list seqs)
     (if (null? seqs)
         (empty-instruction-sequence)
         (append-2-sequences
          (car seqs)
          (append-seq-list (cdr seqs)))))
-  
+
   (append-seq-list seqs))
 
 (define (list-union s1 s2)
@@ -507,8 +507,15 @@
 
 (define fact-text
   '(def (factorial n)
+        (if (= n 1)
+            1
+            (* (factorial (- n 1)) n))))
+
+(define fact-text-with-run
+  '((def (factorial n)
          (if (= n 1)
              1
-             (* (factorial (- n 1)) n))))
+             (+ (factorial (- n 1)) n)))
+    (factorial 5)))
 
 (define (print-factorial) (test-compile fact-text))

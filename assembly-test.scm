@@ -21,8 +21,8 @@
     after-lambda1                           ;; 19
     ))
 
-;; TODO - reprint, at least one typo
-(define factorial-compiled  ;; from print-factorial in 5-compiler.scm
+
+(define factorial-test ;; from "print-factorial" in 5-compiler
   '((assign val (op make-compiled-procedure) (label entry2) (reg env))
     (goto (label after-lambda1))
     entry2
@@ -49,7 +49,7 @@
     (test (op compiled-procedure?) (reg proc))
     (branch (label compiled-branch7))
     (save continue)
-    (goto (reg continue))
+    (goto (reg compapp))
     compiled-branch7
     (assign continue (label proc-return9))
     (assign val (op compiled-procedure-entry) (reg proc))
